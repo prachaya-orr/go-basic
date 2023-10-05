@@ -12,8 +12,23 @@ func Debug(obj any) {
 	fmt.Println(string(raw))
 }
 
+type IBook interface {
+	GetBook() *book
+	SetTitle(title string)
+}
+
 type book struct {
 	*models.Book
+}
+
+func NewBook(title, author string) IBook {
+	return &book{
+		&models.Book{
+			Id:     1,
+			Title:  title,
+			Author: author,
+		},
+	}
 }
 
 func (b *book) GetBook() *book {
@@ -25,13 +40,10 @@ func (b *book) SetTitle(title string) {
 }
 
 func main() {
-	b := &book{
-		&models.Book{
-			Id:     1,
-			Title:  "Golang Basic",
-			Author: "arther",
-		},
-	}
+	b := NewBook("Golang Basic", "Gopher")
+	fmt.Println(b.GetBook())
+	raw, _ := json.MarshalIndent(&b, "", "\t")
+	fmt.Println(string(raw))
 	b.SetTitle("ABC")
 	Debug(b.GetBook())
 
