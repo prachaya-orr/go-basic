@@ -2,52 +2,62 @@ package main
 
 import "fmt"
 
+// jobs
+type number struct {
+	a int
+	b int
+}
+
+// results
+type sum struct {
+	r int
+}
+
+func workers(jobsCh <-chan number, resultsCh chan<- sum) {
+	for job := range jobsCh {
+		resultsCh <- sum{r: summation(job.a, job.b)}
+	}
+}
+
+func summation(a, b int) int {
+	return a + b
+}
+
 func main() {
-
-	// Basic -> sync.Waitgroup
-	// a := []int{1, 2, 3, 4, 5}
-
-	// var wg sync.WaitGroup
-	// for i := range a {
-	// 	wg.Add(1)
-	// 	go func(i int) {
-	// 		defer wg.Done()
-	// 		fmt.Printf("%v ", a[i])
-	// 	}(i)
-	// }
-	// wg.Wait()
-
-	// var wg sync.WaitGroup
-	// wg.Add(len(a))
-	// go func() {
-	// 	for i := range a {
-	// 		defer wg.Done()
-	// 		fmt.Printf("%v ", a[i])
-	// 	}
-	// }()
-	// wg.Wait()
-
-	// Chanel
-	numberCh := make(chan int)
-	msgCh := make(chan string)
-
-	// number
-	// chan<- int รับค่าได้อย่างเดียว ไม่ assign
-	go func(numberCh chan<- int) {
-		numberCh <- 10
-	}(numberCh)
-
-	// msg
-	go func(msgCh chan<- string) {
-		msgCh <- "hello world"
-	}(msgCh)
-
-	number := <-numberCh
-	msg := <-msgCh
-
-	fmt.Println(number)
-	fmt.Println(msg)
-
 	// Worker Pool
+	nums := []number{
+		{a: 1, b: 2},
+		{a: 2, b: 3},
+		{a: 3, b: 4},
+		{a: 4, b: 5},
+		{a: 5, b: 6},
+		{a: 1, b: 2},
+		{a: 2, b: 3},
+		{a: 3, b: 4},
+		{a: 4, b: 5},
+		{a: 5, b: 6},
+	}
+
+	jobsCh := make(chan number, len(nums))
+	resultsCh := make(chan sum, len(nums))
+
+	for _, n := range nums {
+		jobsCh <- n
+	}
+	close(jobsCh)
+
+	numberWorkers := 2
+	for w := 0; w < numberWorkers; w++ {
+		// go routines
+		go workers(jobsCh, resultsCh)
+	}
+
+	results := make([]sum, 0)
+	for a := 0; a < len(nums); a++ {
+		temp := <-resultsCh
+		results = append(results, temp)
+	}
+
+	fmt.Println(results)
 
 }
